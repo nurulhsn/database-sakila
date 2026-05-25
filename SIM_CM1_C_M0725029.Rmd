@@ -1,0 +1,519 @@
+---
+title: "Analisis Pendapatan dan Popularitas Kategori Film pada Database Sakila"
+author: "Nurul Hasanah M0725029 C"
+date: "`r Sys.Date()`"
+
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+    highlight: tango
+---
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+body{
+    font-family: 'Poppins';
+    font-weight: 400;
+    background: linear-gradient(to right, #ffe0ec, #f8e8ff);
+    color: #4a4a4a;
+    line-height: 1.9;
+    margin: 20px;
+    font-size: 15px;
+}
+
+/* Judul utama */
+h1{
+    font-family: 'Poppins';
+    color: #d63384;
+    text-align: center;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+/* Subjudul */
+h2{
+    font-family: 'Poppins';
+    color: #c2185b;
+    border-left: 5px solid #ff85b3;
+    padding-left: 12px;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    font-size: 24px;
+    font-weight: 600;
+    background-color: rgba(255,255,255,0.45);
+    border-radius: 8px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+/* Heading kecil */
+h3{
+    font-family: 'Poppins';
+    color: #7b2cbf;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+/* Paragraph */
+p{
+    text-align: justify;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/* List */
+li{
+    margin-bottom: 5px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/* Code chunk */
+pre{
+    background-color: #fff0f6;
+    border-radius: 12px;
+    padding: 14px;
+    border-left: 4px solid #d63384;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow-x: auto;
+
+    font-size: 14px;
+    font-weight: 500;
+    color: #3d3d3d;
+    line-height: 1.7;
+}
+
+/* Supaya syntax tidak tipis */
+pre code{
+    font-weight: 600 !important;
+}
+
+/* Table */
+table{
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    font-size: 14px;
+}
+
+/* Header tabel */
+th{
+    background: linear-gradient(to right, #ff85b3, #c77dff);
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Isi tabel */
+td{
+    padding: 8px;
+    border-bottom: 1px solid #f0d6e6;
+    font-weight: 500;
+}
+
+/* Hover tabel */
+tr:hover{
+    background-color: #fff0f6;
+}
+
+/* TOC / Sidebar */
+#TOC{
+    background-color: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-size: 14px;
+}
+
+/* Link */
+a{
+    color: #c2185b;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+a:hover{
+    color: #7b2cbf;
+}
+
+/* Blockquote */
+blockquote{
+    background-color: #fff0f6;
+    border-left: 4px solid #ff85b3;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+/* Math equation */
+.MathJax{
+    font-size: 105% !important;
+}
+
+/* Gambar */
+img{
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Horizontal line */
+hr{
+    border: none;
+    height: 2px;
+    background: linear-gradient(to right, #ff85b3, #c77dff);
+}
+
+/* Nama author */
+.author{
+    text-align: center;
+    font-family: 'Poppins';
+    font-size: 20px;
+    color: #7b2cbf;
+    font-weight: 600;
+}
+
+/* Tanggal */
+.date{
+    text-align: center;
+    font-family: 'Poppins';
+    font-size: 15px;
+    color: #c2185b;
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+# Pendahuluan
+
+Database Sakila merupakan database simulasi sistem rental film yang dikembangkan oleh MySQL. Database ini berisi data pelanggan, transaksi rental, pembayaran, kategori film, inventory, dan berbagai informasi lain yang berkaitan dengan sistem rental film.
+
+Pada laporan ini dilakukan analisis terhadap kategori film berdasarkan jumlah rental dan total pendapatan yang diperoleh perusahaan rental film.
+
+Tujuan dari analisis ini yaitu:
+
+1. Mengetahui kategori film dengan jumlah rental tertinggi.
+2. Mengetahui kategori film dengan total pendapatan terbesar.
+3. Menganalisis hubungan antara jumlah rental dan pendapatan.
+4. Memberikan insight bisnis berdasarkan data yang dianalisis.
+
+Analisis ini penting karena perusahaan dapat memahami preferensi pelanggan serta menentukan strategi bisnis yang lebih efektif berbasis data.
+
+# Insight yang Diambil
+
+Insight utama yang diambil dalam analisis ini adalah hubungan antara popularitas kategori film dengan pendapatan yang diperoleh perusahaan rental film.
+
+Insight ini dipilih karena perusahaan rental film perlu memahami kategori film yang paling diminati pelanggan agar dapat:
+
+- Meningkatkan strategi pemasaran,
+- Mengoptimalkan inventory film,
+- Meningkatkan profit perusahaan,
+- Serta memahami pola perilaku pelanggan berdasarkan data transaksi rental.
+
+Melalui visualisasi dan analisis statistik, diharapkan perusahaan dapat memperoleh informasi yang berguna dalam pengambilan keputusan bisnis berbasis data.
+
+# Import Library
+
+```{r}
+library(DBI)
+library(RMySQL)
+library(ggplot2)
+library(knitr)
+library(scales)
+```
+
+# Koneksi Database
+
+```{r}
+sakilaction = dbConnect(
+  RMySQL::MySQL(),
+  dbname = "sakila",
+  host = "127.0.0.1",
+  port = 3306,
+  user = "root",
+  password = "admin123"
+)
+```
+
+# Pengambilan Data
+
+Data diambil menggunakan query SQL berikut.
+
+```{r}
+query = "SELECT
+    c.name AS category,
+    COUNT(r.rental_id) AS total_rental,
+    SUM(p.amount) AS total_revenue,
+    AVG(f.length) AS avg_duration
+
+FROM category c
+JOIN film_category fc
+    ON c.category_id = fc.category_id
+JOIN film f
+    ON fc.film_id = f.film_id
+JOIN inventory i
+    ON f.film_id = i.film_id
+JOIN rental r
+    ON i.inventory_id = r.inventory_id
+JOIN payment p
+    ON r.rental_id = p.rental_id
+GROUP BY c.name
+ORDER BY total_revenue DESC"
+
+film_data = dbGetQuery(sakilaction, query)
+kable(film_data)
+```
+
+# Deskripsi Dataset
+
+Dataset yang digunakan berasal dari database Sakila.
+
+Variabel yang digunakan pada analisis ini meliputi:
+
+| Variabel | Keterangan |
+|---|---|
+| category | Nama kategori film |
+| total_rental | Total jumlah rental |
+| total_revenue | Total pendapatan |
+| avg_duration | Rata-rata durasi film |
+
+# Data Preparation
+
+Tahap data preparation dilakukan untuk memastikan data siap digunakan dalam proses analisis dan visualisasi.
+
+```{r}
+str(film_data)
+summary(film_data)
+sum(is.na(film_data))
+```
+
+Berdasarkan hasil pengecekan, data tidak memiliki missing value sehingga data dapat langsung digunakan untuk proses analisis.
+
+# Visualisasi Data
+
+# 1. Total Pendapatan per Kategori Film
+
+```{r}
+ggplot(
+  film_data,
+  aes(
+    x = reorder(category, total_revenue),
+    y = total_revenue
+  )
+) + geom_bar(
+  stat = "identity",
+  fill = "#1f77b4"
+) + coord_flip() + labs(
+  title = "Total Pendapatan per Kategori Film",
+  x = "Kategori Film",
+  y = "Total Pendapatan"
+) + theme_minimal()
+```
+
+# Interpretasi Visualisasi Total Pendapatan per Kategori Film
+
+Visualisasi di atas menunjukkan total pendapatan yang diperoleh dari setiap kategori film.
+
+Terlihat bahwa beberapa kategori film memiliki pendapatan yang jauh lebih tinggi dibanding kategori lainnya. Hal ini menunjukkan bahwa pelanggan memiliki preferensi yang lebih besar terhadap kategori tertentu.
+
+Kategori dengan revenue tertinggi mengindikasikan bahwa kategori tersebut memiliki tingkat permintaan yang tinggi di pasar rental film. Tingginya pendapatan dapat dipengaruhi oleh:
+
+1. Popularitas genre film.
+2. Banyaknya inventory yang tersedia.
+3. Tingginya frekuensi rental pelanggan.
+4. Ketertarikan pelanggan terhadap jenis film tertentu.
+
+Sebaliknya, kategori dengan pendapatan rendah menunjukkan bahwa minat pelanggan terhadap kategori tersebut relatif lebih kecil.
+
+Berdasarkan insight ini, perusahaan rental dapat:
+
+- Menambah koleksi film populer,
+- Mengoptimalkan inventory,
+- Membuat strategi promosi berdasarkan kategori,
+- Serta meningkatkan efisiensi bisnis.
+
+# 2. Jumlah Rental per Kategori Film
+
+```{r}
+ggplot(
+  film_data,
+  aes(
+    x = reorder(category, total_rental),
+    y = total_rental
+  )
+) + geom_bar(
+  stat = "identity",
+  fill = "maroon"
+) + coord_flip() + labs(
+  title = "Jumlah Rental per Kategori Film",
+  x = "Kategori Film",
+  y = "Jumlah Rental"
+) + theme_minimal()
+```
+
+# Interpretasi Visualisasi Jumlah Rental per Kategori Film
+
+Visualisasi di atas menunjukkan jumlah rental untuk masing-masing kategori film.
+
+Kategori dengan jumlah rental tinggi menunjukkan bahwa pelanggan lebih sering memilih film dari kategori tersebut dibanding kategori lain.
+
+Tingginya jumlah rental dapat dipengaruhi oleh:
+
+- Preferensi pelanggan,
+- Tren hiburan,
+- Kualitas film,
+- Jumlah film yang tersedia,
+- Serta tingkat popularitas genre.
+
+Data ini sangat penting karena perusahaan dapat mengetahui kategori film yang paling diminati pelanggan sehingga dapat digunakan sebagai dasar pengambilan keputusan bisnis.
+
+# 3. Hubungan Jumlah Rental dan Total Revenue
+
+```{r}
+ggplot(
+  film_data,
+  aes(
+    x = total_rental,
+    y = total_revenue,
+    label = category
+  )
+) + geom_point(
+  size = 4,
+  color = "darkblue"
+) + geom_text(
+  vjust = -0.5
+) + labs(
+  title = "Hubungan Jumlah Rental dan Total Revenue",
+  x = "Jumlah Rental",
+  y = "Total Revenue"
+) + theme_minimal()
+```
+
+# Interpretasi Visualisasi Hubungan Jumlah Rental dan Total Revenue
+
+
+Scatter plot menunjukkan hubungan antara jumlah rental dan total revenue.
+
+Titik-titik pada grafik cenderung membentuk pola meningkat dari kiri bawah menuju kanan atas. Hal ini menunjukkan adanya hubungan positif antara jumlah rental dan total pendapatan.
+
+Dengan kata lain, semakin tinggi jumlah rental pada suatu kategori film, maka semakin besar pula pendapatan yang diperoleh perusahaan.
+
+# Analisis Statistik
+
+# Statistik Deskriptif
+
+```{r}
+summary(film_data)
+```
+
+# Analisis Korelasi
+
+```{r}
+correlation = cor(
+  film_data$total_rental,
+  film_data$total_revenue
+)
+
+correlation
+```
+
+# Interpretasi Analisis Korelasi
+
+Koefisien korelasi digunakan untuk mengetahui kekuatan hubungan antara jumlah rental dan total pendapatan.
+
+Jika nilai korelasi mendekati 1, maka hubungan antara kedua variabel bersifat positif kuat.
+
+Artinya, peningkatan jumlah rental cenderung diikuti dengan peningkatan pendapatan perusahaan.
+
+# Persamaan Matematis Menggunakan LaTeX
+
+Rata-rata pendapatan dapat dihitung menggunakan persamaan berikut.
+
+$$
+\bar{x} = \frac{\sum x}{n}
+$$
+
+Keterangan:
+
+- $\bar{x}$ = rata-rata pendapatan
+- $\sum x$ = total seluruh pendapatan
+- $n$ = jumlah data
+
+Persamaan korelasi Pearson:
+
+$$
+r =
+\frac{
+n\sum xy - (\sum x)(\sum y)
+}
+{
+\sqrt{
+[n\sum x^2 - (\sum x)^2]
+[n\sum y^2 - (\sum y)^2]
+}
+}
+$$
+
+Persamaan regresi linear:
+
+$$
+y = a + bx
+$$
+
+Keterangan:
+
+- $y$ = variabel dependen
+- $x$ = variabel independen
+- $a$ = konstanta
+- $b$ = koefisien regresi
+
+# Analisis Regresi Linear
+
+```{r}
+model = lm(
+  total_revenue ~ total_rental,
+  data = film_data
+)
+
+summary(model)
+```
+
+# Interpretasi Regresi Linear
+
+Analisis regresi linear digunakan untuk mengetahui pengaruh jumlah rental terhadap total revenue.
+
+Jika nilai koefisien regresi bernilai positif, maka peningkatan jumlah rental akan meningkatkan total pendapatan perusahaan.
+
+Regresi linear juga membantu perusahaan dalam melakukan prediksi revenue berdasarkan jumlah rental di masa mendatang.
+
+# Kesimpulan
+
+Berdasarkan hasil visualisasi dan analisis data, dapat disimpulkan bahwa kategori film tertentu memiliki performa yang lebih baik dibanding kategori lainnya dalam menghasilkan revenue.
+
+Jumlah rental terbukti memiliki hubungan positif terhadap total pendapatan perusahaan. Semakin tinggi jumlah rental suatu kategori, maka semakin besar pula pendapatan yang diperoleh.
+
+Melalui analisis data menggunakan database Sakila, perusahaan rental film dapat memahami pola perilaku pelanggan serta menentukan strategi bisnis yang lebih efektif dan berbasis data.
+
+# Menutup Koneksi Database
+
+```{r}
+dbDisconnect(sakilaction)
+```
